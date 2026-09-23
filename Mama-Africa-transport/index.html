@@ -1,0 +1,2358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MAMA AFRICA · Transport</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;0,9..144,700;1,9..144,560&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <style>
+    :root {
+      --ink: #1c2126;
+      --slate: #2b3336;
+      --teal: #3f5a57;
+      --teal-deep: #2c403e;
+      --clay: #8d6a4a;
+      --champagne: #c2b39a;
+      --terracotta: #9a584e;
+      --stone: #f3f0ea;
+      --card: #fffcf8;
+      --muted: #6a645c;
+      --line: #d8d2c8;
+      --shadow: 0 14px 36px rgba(28, 33, 38, 0.08);
+      --radius: 18px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body { min-height: 100%; }
+
+    body {
+      font-family: Outfit, system-ui, sans-serif;
+      background:
+        radial-gradient(circle at top right, rgba(194, 179, 154, 0.28), transparent 32%),
+        linear-gradient(180deg, #f7f4ee 0%, var(--stone) 100%);
+      color: var(--ink);
+    }
+
+    button, input, select, textarea { font-family: inherit; }
+
+    .app {
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      background:
+        linear-gradient(165deg, #32393c 0%, #1f2628 72%);
+      color: #f4efe6;
+      padding: 26px 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 22px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      border-right: 1px solid rgba(194, 179, 154, 0.18);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding-bottom: 8px;
+    }
+
+    .brand img {
+      width: 68px;
+      height: 68px;
+      object-fit: cover;
+      border-radius: 50%;
+      background: #fff;
+      border: 2px solid var(--champagne);
+      box-shadow: 0 0 0 4px rgba(194, 179, 154, 0.16);
+    }
+
+    .wordmark h1 {
+      font-family: Fraunces, Georgia, serif;
+      font-size: 1.35rem;
+      line-height: 0.95;
+      font-weight: 700;
+    }
+
+    .wm-mama {
+      display: block;
+      font-style: italic;
+      font-weight: 560;
+      color: var(--champagne);
+      letter-spacing: 0.02em;
+    }
+
+    .wm-africa {
+      display: block;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      font-size: 1.05rem;
+    }
+
+    .wordmark-line {
+      display: block;
+      width: 46px;
+      height: 1px;
+      background: var(--champagne);
+      margin: 7px 0 6px;
+    }
+
+    .wordmark-sub {
+      font-size: 0.68rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: #d8d2c8;
+    }
+
+    .brand p {
+      font-size: 0.75rem;
+      color: #c9d4c4;
+      margin-top: 4px;
+    }
+
+    .nav-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    nav button {
+      width: 100%;
+      text-align: left;
+      border: 0;
+      background: transparent;
+      color: #d5d0c8;
+      padding: 11px 12px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-size: 0.94rem;
+      font-weight: 600;
+      transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
+    }
+
+    nav button:hover { background: rgba(255,255,255,0.07); color: #fff; }
+    nav button.active {
+      background: var(--champagne);
+      color: #2a241c;
+    }
+
+    .sidebar-foot {
+      margin-top: auto;
+      font-size: 0.78rem;
+      color: #b7b1a7;
+      line-height: 1.5;
+    }
+
+    .content {
+      padding: 28px;
+      min-width: 0;
+    }
+
+    .topbar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 18px;
+    }
+
+    .menu-toggle {
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 10px;
+      padding: 8px 12px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .page-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .page-head h2 {
+      font-family: Fraunces, Georgia, serif;
+      font-size: 1.75rem;
+      font-weight: 560;
+    }
+    .page-head p { color: var(--muted); margin-top: 4px; }
+
+    section { display: none; }
+    section.active { display: block; animation: fadeIn 0.25s ease; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 20px;
+      margin-bottom: 18px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px;
+      align-items: start;
+    }
+
+    .stat-card,
+    .dash-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .dash-card {
+      min-width: 0;
+      transition: box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .dash-card.open {
+      grid-column: 1 / -1;
+      box-shadow: 0 16px 36px rgba(22, 48, 29, 0.12);
+    }
+
+    .dash-card-toggle {
+      width: 100%;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      background: transparent;
+      color: inherit;
+      text-align: left;
+      padding: 0;
+      border-radius: 0;
+    }
+
+    .dash-card-toggle:hover { transform: none; filter: none; }
+
+    .dash-chevron {
+      font-size: 1.1rem;
+      line-height: 1;
+      transition: transform 0.2s ease;
+    }
+
+    .dash-card.open .dash-chevron { transform: rotate(180deg); }
+
+    .dash-card-body {
+      display: none;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
+    }
+
+    .dash-card.open .dash-card-body { display: block; }
+
+    .dash-summary {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .dash-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 0.92rem;
+    }
+
+    .dash-row:last-child { border-bottom: 0; }
+
+    .stat-card.accent,
+    .dash-card.accent { background: var(--teal-deep); color: #f6f1e8; border-color: var(--teal-deep); }
+    .stat-card.accent .stat-label,
+    .dash-card.accent .stat-label,
+    .dash-card.accent .field-hint { color: #d5cfc4; }
+    .dash-card.accent .dash-card-body { border-top-color: rgba(255,255,255,0.18); }
+    .dash-card.accent .dash-row { border-bottom-color: rgba(255,255,255,0.12); }
+    .stat-label { font-size: 0.82rem; color: var(--muted); font-weight: 600; }
+    .stat-value { font-size: 1.45rem; font-weight: 800; margin-top: 6px; }
+
+    @media (max-width: 640px) {
+      .stats { grid-template-columns: 1fr; }
+      .dash-card.open { grid-column: auto; }
+    }
+
+    @media print {
+      .sidebar, .topbar, .overlay, .toast, nav, form, .actions-row, .menu-toggle,
+      .no-print, .trip-map, .dash-card-body, .field-hint { display: none !important; }
+      .dash-card.open .dash-card-body { display: block !important; }
+      .app { display: block; }
+      .sidebar { display: none !important; }
+      .content { padding: 0; }
+      body { background: #fff; color: #111; }
+      section { display: none !important; }
+      section.active { display: block !important; }
+      .card, .dash-card, .stat-card { box-shadow: none; break-inside: avoid; }
+      .page-head { margin-bottom: 12px; }
+      a { color: inherit; text-decoration: none; }
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: #fffcf7;
+      font-size: 0.95rem;
+      outline: none;
+      transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    }
+
+    textarea {
+      min-height: 110px;
+      resize: vertical;
+      line-height: 1.45;
+    }
+
+    input:focus, select:focus, textarea:focus {
+      border-color: var(--teal);
+      box-shadow: 0 0 0 3px rgba(63, 90, 87, 0.18);
+    }
+
+    input:invalid:not(:placeholder-shown),
+    textarea:invalid:not(:placeholder-shown) {
+      border-color: var(--terracotta);
+    }
+
+    .field-hint {
+      display: block;
+      margin-top: 5px;
+      font-size: 0.75rem;
+      color: var(--muted);
+    }
+
+    .field-wide { grid-column: 1 / -1; }
+
+    .place-search { position: relative; }
+    .place-results {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: calc(100% - 2px);
+      z-index: 8;
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 0 0 12px 12px;
+      box-shadow: var(--shadow);
+      max-height: 240px;
+      overflow: auto;
+    }
+    .place-results button {
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      border-radius: 0;
+      font-weight: 500;
+      color: var(--ink);
+      padding: 10px 12px;
+    }
+    .place-results button:hover { background: #f3efe6; transform: none; }
+    .place-results small {
+      display: block;
+      color: var(--muted);
+      font-size: 0.75rem;
+      font-weight: 400;
+    }
+
+    .trip-map {
+      height: 320px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      margin-top: 8px;
+      z-index: 1;
+    }
+
+    .actions-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 6px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-weight: 700;
+      font-size: 0.92rem;
+      transition: transform 0.12s ease, filter 0.12s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: none; }
+
+    .btn-primary { background: var(--teal-deep); color: #f6f1e8; }
+    .btn-primary:hover { background: var(--teal); color: #fff; }
+    .btn-secondary { background: #e8e3da; color: var(--ink); }
+    .btn-danger { background: var(--terracotta); color: #fff; }
+    .btn-success { background: var(--clay); color: #fff; }
+
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th, td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--line); white-space: nowrap; }
+    th { color: var(--muted); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+    tbody tr:hover { background: #f3efe6; }
+
+    .actions { display: flex; gap: 6px; }
+    .actions button { padding: 6px 10px; font-size: 0.8rem; }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .badge.active, .badge.Active { background: #dce8e6; color: #2c403e; }
+    .badge.maintenance, .badge.Maintenance { background: #efe4d3; color: #6d4e32; }
+    .badge.inactive, .badge.Inactive { background: #ead9d5; color: #6f3d37; }
+    .badge.on.leave, .badge[data-status="on leave"] { background: #e4e2dc; color: #3d3a36; }
+
+    .empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 22px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .summary-item {
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 12px;
+      background: #fffcf7;
+    }
+
+    .toast {
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      background: var(--slate);
+      color: #fff;
+      padding: 12px 16px;
+      border-radius: 12px;
+      box-shadow: var(--shadow);
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(8px);
+      transition: 0.25s ease;
+      z-index: 40;
+    }
+    .toast.show { opacity: 1; transform: none; }
+
+    .overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(10, 16, 10, 0.45);
+      z-index: 20;
+    }
+
+    @media (max-width: 900px) {
+      .app { grid-template-columns: 1fr; }
+      .sidebar {
+        position: fixed;
+        left: 0;
+        top: 0;
+        width: min(82vw, 300px);
+        transform: translateX(-105%);
+        z-index: 30;
+        transition: transform 0.25s ease;
+      }
+      .sidebar.open { transform: none; }
+      .overlay.show { display: block; }
+      .topbar { display: flex; }
+      .content { padding: 16px; }
+      .page-head { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay" id="nav-overlay"></div>
+  <div class="app">
+    <aside class="sidebar" id="sidebar">
+      <div class="brand">
+        <img src="LOGO.jpg" alt="Mama Africa Transport emblem">
+        <div class="wordmark">
+          <h1>
+            <span class="wm-mama">Mama</span>
+            <span class="wm-africa">Africa</span>
+          </h1>
+          <span class="wordmark-line" aria-hidden="true"></span>
+          <p class="wordmark-sub">Transport</p>
+        </div>
+      </div>
+      <nav class="nav-list" aria-label="Main">
+        <button data-section="dashboard" class="active">Dashboard</button>
+        <button data-section="taxis">Taxis</button>
+        <button data-section="drivers">Drivers</button>
+        <button data-section="trips">Trips</button>
+        <button data-section="fuel">Fuel</button>
+        <button data-section="maintenance">Maintenance</button>
+        <button data-section="collected">Collections</button>
+        <button data-section="view-all">Records</button>
+      </nav>
+      <div class="sidebar-foot">Kampala to the country. Safe arrivals, every trip.</div>
+    </aside>
+
+    <div class="content">
+      <div class="topbar">
+        <strong class="wordmark-sub" style="letter-spacing:0.16em">Mama Africa · Transport</strong>
+        <button class="menu-toggle" id="menu-toggle" type="button">Menu</button>
+      </div>
+
+      <section id="dashboard" class="active">
+        <div class="page-head">
+          <div>
+            <h2>Operations overview</h2>
+            <p>Tap a card to open a summary, then jump to the full page if you need more.</p>
+          </div>
+          <button type="button" class="btn-secondary no-print" data-print>Print dashboard</button>
+        </div>
+        <div class="stats" id="dashboard-cards">
+          <article class="dash-card" data-panel="taxis">
+            <button type="button" class="dash-card-toggle" aria-expanded="false">
+              <div>
+                <div class="stat-label">Taxis</div>
+                <div class="stat-value" id="stat-taxis">0</div>
+                <span class="field-hint">Open fleet summary</span>
+              </div>
+              <span class="dash-chevron">▾</span>
+            </button>
+            <div class="dash-card-body">
+              <div id="dash-taxis-summary"></div>
+              <div class="actions-row">
+                <button type="button" class="btn-primary dash-open-page" data-section="taxis">Open taxis page</button>
+              </div>
+            </div>
+          </article>
+          <article class="dash-card" data-panel="drivers">
+            <button type="button" class="dash-card-toggle" aria-expanded="false">
+              <div>
+                <div class="stat-label">Drivers</div>
+                <div class="stat-value" id="stat-drivers">0</div>
+                <span class="field-hint">Open staff summary</span>
+              </div>
+              <span class="dash-chevron">▾</span>
+            </button>
+            <div class="dash-card-body">
+              <div id="dash-drivers-summary"></div>
+              <div class="actions-row">
+                <button type="button" class="btn-primary dash-open-page" data-section="drivers">Open drivers page</button>
+              </div>
+            </div>
+          </article>
+          <article class="dash-card" data-panel="trips">
+            <button type="button" class="dash-card-toggle" aria-expanded="false">
+              <div>
+                <div class="stat-label">Trips</div>
+                <div class="stat-value" id="stat-trips">0</div>
+                <span class="field-hint">Open recent trips</span>
+              </div>
+              <span class="dash-chevron">▾</span>
+            </button>
+            <div class="dash-card-body">
+              <div id="dash-trips-summary"></div>
+              <div class="actions-row">
+                <button type="button" class="btn-primary dash-open-page" data-section="trips">Record a trip</button>
+                <button type="button" class="btn-secondary dash-open-page" data-section="view-all">View all records</button>
+              </div>
+            </div>
+          </article>
+          <article class="dash-card accent" data-panel="collected">
+            <button type="button" class="dash-card-toggle" aria-expanded="false">
+              <div>
+                <div class="stat-label">Revenue (UGX)</div>
+                <div class="stat-value" id="stat-revenue">0</div>
+                <span class="field-hint">Open collections summary</span>
+              </div>
+              <span class="dash-chevron">▾</span>
+            </button>
+            <div class="dash-card-body">
+              <div id="dash-revenue-summary"></div>
+              <div class="actions-row">
+                <button type="button" class="btn-primary dash-open-page" data-section="collected">Open collections page</button>
+              </div>
+            </div>
+          </article>
+          <article class="dash-card" data-panel="fuel">
+            <button type="button" class="dash-card-toggle" aria-expanded="false">
+              <div>
+                <div class="stat-label">Fuel spend (UGX)</div>
+                <div class="stat-value" id="stat-fuel">0</div>
+                <span class="field-hint">Open fuel summary</span>
+              </div>
+              <span class="dash-chevron">▾</span>
+            </button>
+            <div class="dash-card-body">
+              <div id="dash-fuel-summary"></div>
+              <div class="actions-row">
+                <button type="button" class="btn-primary dash-open-page" data-section="fuel">Open fuel page</button>
+              </div>
+            </div>
+          </article>
+          <article class="dash-card" data-panel="maintenance">
+            <button type="button" class="dash-card-toggle" aria-expanded="false">
+              <div>
+                <div class="stat-label">Maintenance (UGX)</div>
+                <div class="stat-value" id="stat-maintenance">0</div>
+                <span class="field-hint">Open workshop summary</span>
+              </div>
+              <span class="dash-chevron">▾</span>
+            </button>
+            <div class="dash-card-body">
+              <div id="dash-maintenance-summary"></div>
+              <div class="actions-row">
+                <button type="button" class="btn-primary dash-open-page" data-section="maintenance">Open maintenance page</button>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="taxis">
+        <div class="page-head">
+          <div>
+            <h2>Manage taxis</h2>
+            <p>Register vehicles and keep their status current.</p>
+          </div>
+          <button type="button" class="btn-secondary no-print" data-print>Print fleet list</button>
+        </div>
+        <form id="taxi-form" class="card">
+          <input type="hidden" id="taxi-id">
+          <div class="grid">
+            <div>
+              <label for="taxi-plate">Number plate</label>
+              <input type="text" id="taxi-plate" required placeholder="UA992MA" maxlength="8" pattern="U[A-Z]{1,2}[0-9]{3}[A-Z]{1,2}" title="Use a Uganda plate like UA992MA" style="text-transform:uppercase">
+              <span class="field-hint">Format: UA992MA</span>
+            </div>
+            <div>
+              <label for="taxi-make">Make</label>
+              <input type="text" id="taxi-make" required placeholder="Toyota" maxlength="30" pattern="[A-Za-z][A-Za-z ]{1,29}" title="Letters only, like Toyota">
+              <span class="field-hint">Format: Toyota</span>
+            </div>
+            <div>
+              <label for="taxi-model">Model</label>
+              <input type="text" id="taxi-model" required placeholder="Hiace" maxlength="30" pattern="[A-Za-z0-9][A-Za-z0-9 -]{1,29}" title="Letters and numbers, like Hiace">
+              <span class="field-hint">Format: Hiace</span>
+            </div>
+            <div>
+              <label for="taxi-year">Year</label>
+              <input type="number" id="taxi-year" required min="1990" max="2056" step="1" placeholder="2018" title="Year between 1990 and 2056">
+              <span class="field-hint">Format: 2018</span>
+            </div>
+            <div>
+              <label for="taxi-color">Color</label>
+              <input type="text" id="taxi-color" required placeholder="Grey" maxlength="20" pattern="[A-Za-z][A-Za-z ]{2,19}" title="Letters only, like Grey">
+              <span class="field-hint">Format: Grey</span>
+            </div>
+            <div>
+              <label for="taxi-status">Status</label>
+              <select id="taxi-status" required>
+                <option value="Active">Active</option>
+                <option value="Maintenance">Maintenance</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions-row">
+            <button type="submit" class="btn-primary">Save taxi</button>
+            <button type="button" id="taxi-clear" class="btn-secondary">Clear</button>
+          </div>
+        </form>
+        <div class="card">
+          <h3>Fleet list</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Plate</th><th>Make</th><th>Model</th><th>Year</th><th>Color</th><th>Status</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="taxis-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="drivers">
+        <div class="page-head">
+          <div>
+            <h2>Manage drivers</h2>
+            <p>Keep contact details and duty status up to date.</p>
+          </div>
+          <button type="button" class="btn-secondary no-print" data-print>Print driver list</button>
+        </div>
+        <form id="driver-form" class="card">
+          <input type="hidden" id="driver-id">
+          <div class="grid">
+            <div>
+              <label for="driver-name">Full name</label>
+              <input type="text" id="driver-name" required placeholder="Ssempala Dickson" maxlength="60" pattern="[A-Za-z][A-Za-z' -]{1,28} [A-Za-z][A-Za-z' -]{1,28}" title="First and last name, like Ssempala Dickson">
+              <span class="field-hint">Format: Ssempala Dickson</span>
+            </div>
+            <div>
+              <label for="driver-phone">Phone</label>
+              <input type="tel" id="driver-phone" required placeholder="0758387804" inputmode="numeric" maxlength="10" pattern="0[0-9]{9}" title="Ugandan mobile: 10 digits starting with 0">
+              <span class="field-hint">Format: 0758387804</span>
+            </div>
+            <div>
+              <label for="driver-license">License number</label>
+              <input type="text" id="driver-license" required placeholder="DL123456" maxlength="8" pattern="[A-Z]{2}[0-9]{6}" title="Two letters then six digits, like DL123456" style="text-transform:uppercase">
+              <span class="field-hint">Format: DL123456</span>
+            </div>
+            <div>
+              <label for="driver-status">Status</label>
+              <select id="driver-status" required>
+                <option value="Active">Active</option>
+                <option value="on leave">On leave</option>
+                <option value="Inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
+          <div class="actions-row">
+            <button type="submit" class="btn-primary">Save driver</button>
+            <button type="button" id="driver-clear" class="btn-secondary">Clear</button>
+          </div>
+        </form>
+        <div class="card">
+          <h3>Driver list</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Name</th><th>Phone</th><th>License</th><th>Status</th><th>Actions</th></tr>
+              </thead>
+              <tbody id="drivers-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="trips">
+        <div class="page-head">
+          <div>
+            <h2>Record a trip</h2>
+            <p>Choose mapped places in Uganda. Distance fills from the route between them.</p>
+          </div>
+        </div>
+        <form id="trip-form" class="card">
+          <input type="hidden" id="trip-id">
+          <div class="grid">
+            <div>
+              <label for="trip-date">Date</label>
+              <input type="date" id="trip-date" required>
+            </div>
+            <div>
+              <label for="trip-time">Time</label>
+              <input type="time" id="trip-time" required>
+              <span class="field-hint">Time the trip started</span>
+            </div>
+            <div>
+              <label for="trip-taxi">Taxi</label>
+              <select id="trip-taxi" required><option value="">Select taxi</option></select>
+            </div>
+            <div>
+              <label for="trip-driver">Driver</label>
+              <select id="trip-driver" required><option value="">Select driver</option></select>
+            </div>
+            <div>
+              <label for="trip-pickup">Pickup</label>
+              <div class="place-search">
+                <input type="text" id="trip-pickup" required autocomplete="off" placeholder="Type a place, road or building" minlength="3">
+                <div class="place-results" id="trip-pickup-results" hidden></div>
+              </div>
+              <span class="field-hint">Search any Uganda place, area, road or building</span>
+            </div>
+            <div>
+              <label for="trip-dropoff">Drop-off</label>
+              <div class="place-search">
+                <input type="text" id="trip-dropoff" required autocomplete="off" placeholder="Type a place, road or building" minlength="3">
+                <div class="place-results" id="trip-dropoff-results" hidden></div>
+              </div>
+              <span class="field-hint">Search any Uganda place, area, road or building</span>
+            </div>
+            <div>
+              <label for="trip-distance">Distance (km)</label>
+              <input type="number" step="0.1" min="0.1" id="trip-distance" required placeholder="14.5" readonly>
+              <span class="field-hint">Auto-filled from the map route</span>
+            </div>
+            <div>
+              <label for="trip-fare">Fare per passenger (UGX)</label>
+              <input type="number" min="1000" step="1" id="trip-fare" required placeholder="10000" title="Whole number like 10000">
+              <span class="field-hint">Trip total = fare × passengers</span>
+            </div>
+            <div>
+              <label for="trip-passengers">Passengers on board</label>
+              <input type="number" id="trip-passengers" required min="1" max="60" step="1" placeholder="14" title="Whole number like 14">
+              <span class="field-hint">Format: 14</span>
+            </div>
+            <div class="field-wide">
+              <label for="trip-notes">Notes</label>
+              <textarea id="trip-notes" required minlength="8" maxlength="400" placeholder="Passenger waited at the stage, cash collected in full." title="Write at least 8 characters"></textarea>
+            </div>
+          </div>
+          <div class="field-wide">
+            <label>Uganda route map</label>
+            <div id="trip-map" class="trip-map" role="img" aria-label="Map of Uganda showing pickup and drop-off"></div>
+          </div>
+          <div class="actions-row">
+            <button type="submit" class="btn-primary">Save trip</button>
+            <button type="button" id="trip-clear" class="btn-secondary">Clear</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="fuel">
+        <div class="page-head">
+          <div>
+            <h2>Fuel expenses</h2>
+            <p>Amount updates automatically from litres and rate.</p>
+          </div>
+          <button type="button" class="btn-secondary no-print" data-print>Print fuel records</button>
+        </div>
+        <form id="fuel-form" class="card">
+          <input type="hidden" id="fuel-id">
+          <div class="grid">
+            <div>
+              <label for="fuel-date">Date</label>
+              <input type="date" id="fuel-date" required>
+            </div>
+            <div>
+              <label for="fuel-taxi">Taxi</label>
+              <select id="fuel-taxi" required><option value="">Select taxi</option></select>
+            </div>
+            <div>
+              <label for="fuel-driver">Driver</label>
+              <select id="fuel-driver" required><option value="">Select driver</option></select>
+            </div>
+            <div>
+              <label for="fuel-station">Station</label>
+              <input type="text" id="fuel-station" required placeholder="Shell Kampala Road" maxlength="50" pattern="[A-Za-z][A-Za-z0-9 .,'-]{4,49}" title="Name like Shell Kampala Road">
+              <span class="field-hint">Format: Shell Kampala Road</span>
+            </div>
+            <div>
+              <label for="fuel-type">Fuel type</label>
+              <select id="fuel-type" required>
+                <option value="">Select type</option>
+                <option value="Petrol">Petrol</option>
+                <option value="Diesel">Diesel</option>
+                <option value="CNG">CNG</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label for="fuel-litres">Litres</label>
+              <input type="number" step="0.1" min="0.1" id="fuel-litres" required placeholder="32.5" title="Litres like 32.5">
+              <span class="field-hint">Format: 32.5</span>
+            </div>
+            <div>
+              <label for="fuel-rate">Rate per litre (UGX)</label>
+              <input type="number" step="1" min="1000" id="fuel-rate" required placeholder="5200" title="Rate like 5200">
+              <span class="field-hint">Format: 5200</span>
+            </div>
+            <div>
+              <label for="fuel-amount">Total amount (UGX)</label>
+              <input type="number" min="1000" step="1" id="fuel-amount" required placeholder="158600" title="Amount like 158600">
+              <span class="field-hint">Format: 158600</span>
+            </div>
+            <div>
+              <label for="fuel-odometer">Odometer (km)</label>
+              <input type="number" min="1" step="1" id="fuel-odometer" required placeholder="120500" title="Odometer like 120500">
+              <span class="field-hint">Format: 120500</span>
+            </div>
+            <div>
+              <label for="fuel-payment">Payment</label>
+              <select id="fuel-payment" required>
+                <option value="">Select payment</option>
+                <option value="Cash">Cash</option>
+                <option value="Mobile Money">Mobile Money</option>
+                <option value="Card">Card</option>
+                <option value="Fleet Card">Fleet Card</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div class="field-wide">
+              <label for="fuel-notes">Notes</label>
+              <textarea id="fuel-notes" required minlength="8" maxlength="400" placeholder="Filled a full tank at Shell Kampala Road before the Entebbe run."></textarea>
+            </div>
+          </div>
+          <div class="actions-row">
+            <button type="submit" class="btn-primary">Save fuel record</button>
+            <button type="button" id="fuel-clear" class="btn-secondary">Clear</button>
+          </div>
+        </form>
+        <div class="card">
+          <h3>Recent fuel records</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th><th>Taxi</th><th>Driver</th><th>Station</th><th>Type</th>
+                  <th>Litres</th><th>Rate</th><th>Amount</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="fuel-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="maintenance">
+        <div class="page-head">
+          <div>
+            <h2>Maintenance</h2>
+            <p>Total cost updates from parts and labor.</p>
+          </div>
+          <button type="button" class="btn-secondary no-print" data-print>Print maintenance</button>
+        </div>
+        <form id="maintenance-form" class="card">
+          <input type="hidden" id="maintenance-id">
+          <div class="grid">
+            <div>
+              <label for="maint-date">Date</label>
+              <input type="date" id="maint-date" required>
+            </div>
+            <div>
+              <label for="maint-taxi">Taxi</label>
+              <select id="maint-taxi" required><option value="">Select taxi</option></select>
+            </div>
+            <div>
+              <label for="maint-service-type">Service type</label>
+              <select id="maint-service-type" required>
+                <option value="">Select service</option>
+                <option value="Routine Service">Routine Service</option>
+                <option value="Repair">Repair</option>
+                <option value="Inspection">Inspection</option>
+                <option value="Tyres">Tyres</option>
+                <option value="Oil Change">Oil Change</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+            <div>
+              <label for="maint-description">Work performed</label>
+              <input type="text" id="maint-description" required placeholder="Brake pads replacement" maxlength="80" pattern="[A-Za-z][A-Za-z0-9 .,'-]{4,79}" title="Description like Brake pads replacement">
+              <span class="field-hint">Format: Brake pads replacement</span>
+            </div>
+            <div>
+              <label for="maint-odometer">Odometer (km)</label>
+              <input type="number" min="1" step="1" id="maint-odometer" required placeholder="121000" title="Odometer like 121000">
+              <span class="field-hint">Format: 121000</span>
+            </div>
+            <div>
+              <label for="maint-parts-cost">Parts cost (UGX)</label>
+              <input type="number" min="1000" step="500" id="maint-parts-cost" required placeholder="80000" title="Amount like 80000">
+              <span class="field-hint">Format: 80000</span>
+            </div>
+            <div>
+              <label for="maint-labor-cost">Labor cost (UGX)</label>
+              <input type="number" min="1000" step="500" id="maint-labor-cost" required placeholder="50000" title="Amount like 50000">
+              <span class="field-hint">Format: 50000</span>
+            </div>
+            <div>
+              <label for="maint-total-cost">Total cost (UGX)</label>
+              <input type="number" min="1000" step="500" id="maint-total-cost" required placeholder="130000" title="Amount like 130000">
+              <span class="field-hint">Format: 130000</span>
+            </div>
+            <div>
+              <label for="maint-provider">Garage / provider</label>
+              <input type="text" id="maint-provider" required placeholder="City Motors" maxlength="50" pattern="[A-Za-z][A-Za-z0-9 .,'-]{3,49}" title="Name like City Motors">
+              <span class="field-hint">Format: City Motors</span>
+            </div>
+            <div class="field-wide">
+              <label for="maint-notes">Notes</label>
+              <textarea id="maint-notes" required minlength="8" maxlength="400" placeholder="Replaced both front pads and topped brake fluid after inspection."></textarea>
+            </div>
+          </div>
+          <div class="actions-row">
+            <button type="submit" class="btn-primary">Save maintenance</button>
+            <button type="button" id="maintenance-clear" class="btn-secondary">Clear</button>
+          </div>
+        </form>
+        <div class="card">
+          <h3>Recent maintenance</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th><th>Taxi</th><th>Type</th><th>Description</th>
+                  <th>Parts</th><th>Labor</th><th>Total</th><th>Provider</th><th>Actions</th>
+                </tr>
+              </thead>
+              <tbody id="maintenance-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <section id="collected">
+        <div class="page-head">
+          <div>
+            <h2>Money collected</h2>
+            <p>Filter fare income by date, then review totals by taxi and driver.</p>
+          </div>
+          <button type="button" class="btn-secondary no-print" data-print>Print collections</button>
+        </div>
+        <form id="collected-filters" class="card no-print">
+          <div class="grid">
+            <div>
+              <label for="coll-from">From</label>
+              <input type="date" id="coll-from">
+            </div>
+            <div>
+              <label for="coll-to">To</label>
+              <input type="date" id="coll-to">
+            </div>
+          </div>
+          <div class="actions-row">
+            <button type="submit" id="coll-apply" class="btn-primary">Apply filters</button>
+            <button type="button" id="coll-clear" class="btn-secondary">Clear filters</button>
+          </div>
+        </form>
+        <div class="stats">
+          <div class="stat-card accent"><div class="stat-label">Total collected</div><div class="stat-value" id="coll-total">0</div></div>
+          <div class="stat-card"><div class="stat-label">Trips</div><div class="stat-value" id="coll-trips-count">0</div></div>
+          <div class="stat-card"><div class="stat-label">Average trip revenue</div><div class="stat-value" id="coll-avg-fare">0</div></div>
+        </div>
+        <div class="card">
+          <h3>By taxi</h3>
+          <div class="summary-grid" id="coll-by-taxi"></div>
+          <h3>By driver</h3>
+          <div class="summary-grid" id="coll-by-driver"></div>
+        </div>
+      </section>
+
+      <section id="view-all">
+        <div class="page-head">
+          <div>
+            <h2>All records</h2>
+            <p>Filter trips, fuel, or maintenance, then export or print the list.</p>
+          </div>
+          <button type="button" class="btn-secondary no-print" data-print>Print records</button>
+        </div>
+        <form id="view-all-filters" class="card no-print">
+          <div class="grid">
+            <div>
+              <label for="filter-type">Type</label>
+              <select id="filter-type">
+                <option value="trips">Trips</option>
+                <option value="fuel">Fuel</option>
+                <option value="maintenance">Maintenance</option>
+              </select>
+            </div>
+            <div>
+              <label for="filter-from">From</label>
+              <input type="date" id="filter-from">
+            </div>
+            <div>
+              <label for="filter-to">To</label>
+              <input type="date" id="filter-to">
+            </div>
+            <div>
+              <label for="filter-taxi">Taxi</label>
+              <select id="filter-taxi"><option value="">All</option></select>
+            </div>
+            <div id="filter-driver-wrap">
+              <label for="filter-driver">Driver</label>
+              <select id="filter-driver"><option value="">All</option></select>
+            </div>
+          </div>
+          <div class="actions-row">
+            <button type="submit" id="apply-filters" class="btn-primary">Apply filters</button>
+            <button type="button" id="clear-filters" class="btn-secondary">Clear filters</button>
+            <button type="button" id="export-csv" class="btn-success">Export CSV</button>
+          </div>
+        </form>
+        <div class="card">
+          <h3 id="view-all-title">Trips</h3>
+          <p class="field-hint" id="view-all-count">Showing 0 records</p>
+          <div class="table-wrap">
+            <table id="view-all-table">
+              <thead></thead>
+              <tbody id="view-all-body"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+  <div class="toast" id="toast" role="status"></div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script>
+    const store = {
+      get(key, fallback) {
+        try {
+          const raw = localStorage.getItem(key);
+          return raw ? JSON.parse(raw) : fallback;
+        } catch {
+          return fallback;
+        }
+      },
+      set(key, value) {
+        localStorage.setItem(key, JSON.stringify(value));
+      }
+    };
+
+    function generateId() {
+      return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    }
+
+    const UGANDAN_PLACES = [
+      { name: "Kampala Road, Kampala", lat: 0.3136, lon: 32.5811 },
+      { name: "Entebbe Road, Kampala", lat: 0.2878, lon: 32.5894 },
+      { name: "Jinja Road, Kampala", lat: 0.3275, lon: 32.6028 },
+      { name: "Masaka Road, Kampala", lat: 0.2840, lon: 32.5460 },
+      { name: "Bombo Road, Kampala", lat: 0.3472, lon: 32.5710 },
+      { name: "Makerere, Kampala", lat: 0.3350, lon: 32.5675 },
+      { name: "Wandegeya, Kampala", lat: 0.3328, lon: 32.5736 },
+      { name: "Nakasero, Kampala", lat: 0.3210, lon: 32.5780 },
+      { name: "Kololo, Kampala", lat: 0.3320, lon: 32.5960 },
+      { name: "Ntinda, Kampala", lat: 0.3530, lon: 32.6200 },
+      { name: "Nakawa, Kampala", lat: 0.3370, lon: 32.6180 },
+      { name: "Bugolobi, Kampala", lat: 0.3180, lon: 32.6205 },
+      { name: "Industrial Area, Kampala", lat: 0.3140, lon: 32.6050 },
+      { name: "Owino Market, Kampala", lat: 0.3115, lon: 32.5738 },
+      { name: "Clock Tower, Kampala", lat: 0.3098, lon: 32.5765 },
+      { name: "Namirembe, Kampala", lat: 0.3128, lon: 32.5560 },
+      { name: "Rubaga, Kampala", lat: 0.3025, lon: 32.5520 },
+      { name: "Nateete, Kampala", lat: 0.2950, lon: 32.5280 },
+      { name: "Busega, Kampala", lat: 0.3050, lon: 32.5150 },
+      { name: "Kawempe, Kampala", lat: 0.3790, lon: 32.5570 },
+      { name: "Bwaise, Kampala", lat: 0.3510, lon: 32.5610 },
+      { name: "Makindye, Kampala", lat: 0.2830, lon: 32.5860 },
+      { name: "Ggaba, Kampala", lat: 0.2560, lon: 32.6380 },
+      { name: "Munyonyo, Kampala", lat: 0.2460, lon: 32.6250 },
+      { name: "Kisaasi, Kampala", lat: 0.3680, lon: 32.5980 },
+      { name: "Kira, Wakiso", lat: 0.3980, lon: 32.6400 },
+      { name: "Nansana, Wakiso", lat: 0.3636, lon: 32.5286 },
+      { name: "Wakiso Town", lat: 0.4044, lon: 32.4594 },
+      { name: "Entebbe Town", lat: 0.0512, lon: 32.4637 },
+      { name: "Entebbe Airport", lat: 0.0424, lon: 32.4435 },
+      { name: "Kajjansi, Wakiso", lat: 0.2150, lon: 32.5480 },
+      { name: "Kisubi, Wakiso", lat: 0.1220, lon: 32.5320 },
+      { name: "Mukono Town", lat: 0.3533, lon: 32.7553 },
+      { name: "Seeta, Mukono", lat: 0.3620, lon: 32.7080 },
+      { name: "Njeru, Buikwe", lat: 0.4417, lon: 33.1733 },
+      { name: "Jinja City", lat: 0.4244, lon: 33.2041 },
+      { name: "Iganga Town", lat: 0.6092, lon: 33.4686 },
+      { name: "Kamuli Town", lat: 0.9472, lon: 33.1197 },
+      { name: "Mbale City", lat: 1.0789, lon: 34.1800 },
+      { name: "Tororo Town", lat: 0.6930, lon: 34.1809 },
+      { name: "Soroti City", lat: 1.7145, lon: 33.6111 },
+      { name: "Lira City", lat: 2.2499, lon: 32.8998 },
+      { name: "Gulu City", lat: 2.7746, lon: 32.2990 },
+      { name: "Kitgum Town", lat: 3.2881, lon: 32.8867 },
+      { name: "Arua City", lat: 3.0201, lon: 30.9111 },
+      { name: "Nebbi Town", lat: 2.3200, lon: 31.2400 },
+      { name: "Pakwach Town", lat: 2.4619, lon: 31.4983 },
+      { name: "Masindi Town", lat: 1.6746, lon: 31.7150 },
+      { name: "Hoima City", lat: 1.4356, lon: 31.3436 },
+      { name: "Fort Portal City", lat: 0.6710, lon: 30.2750 },
+      { name: "Kasese Town", lat: 0.1833, lon: 30.0833 },
+      { name: "Mbarara City", lat: -0.6072, lon: 30.6545 },
+      { name: "Kabale Town", lat: -1.2486, lon: 29.9899 },
+      { name: "Kisoro Town", lat: -1.2854, lon: 29.6850 },
+      { name: "Ntungamo Town", lat: -0.8794, lon: 30.2642 },
+      { name: "Bushenyi Town", lat: -0.5422, lon: 30.1864 },
+      { name: "Ishaka, Bushenyi", lat: -0.5440, lon: 30.1380 },
+      { name: "Masaka City", lat: -0.3411, lon: 31.7340 },
+      { name: "Lyantonde Town", lat: -0.4031, lon: 31.1572 },
+      { name: "Mityana Town", lat: 0.4175, lon: 32.0228 },
+      { name: "Mubende Town", lat: 0.5585, lon: 31.3950 },
+      { name: "Luwero Town", lat: 0.8492, lon: 32.4731 },
+      { name: "Wobulenzi, Luwero", lat: 0.7210, lon: 32.5120 },
+      { name: "Bombo, Luwero", lat: 0.5770, lon: 32.5450 },
+      { name: "Nakasongola Town", lat: 1.3089, lon: 32.4564 },
+      { name: "Kayunga Town", lat: 0.7025, lon: 32.8886 },
+      { name: "Busia Town", lat: 0.4659, lon: 34.0922 },
+      { name: "Malaba, Tororo", lat: 0.6430, lon: 34.2600 },
+      { name: "Kapchorwa Town", lat: 1.4000, lon: 34.4500 },
+      { name: "Moroto Town", lat: 2.5350, lon: 34.6660 },
+      { name: "Kotido Town", lat: 2.9800, lon: 34.1300 },
+      { name: "Adjumani Town", lat: 3.3779, lon: 31.7909 },
+      { name: "Moyo Town", lat: 3.6530, lon: 31.7270 },
+      { name: "Yumbe Town", lat: 3.4651, lon: 31.2469 },
+      { name: "Paidha, Zombo", lat: 2.4167, lon: 30.9850 },
+      { name: "Kiryandongo Town", lat: 1.8760, lon: 32.0620 },
+      { name: "Kiboga Town", lat: 0.9167, lon: 31.7667 },
+      { name: "Hoima Road, Kampala", lat: 0.3410, lon: 32.5480 },
+      { name: "Old Taxi Park, Kampala", lat: 0.3132, lon: 32.5758 },
+      { name: "New Taxi Park, Kampala", lat: 0.3148, lon: 32.5722 },
+      { name: "Namboole Stadium, Wakiso", lat: 0.3480, lon: 32.6550 },
+      { name: "Namugongo, Wakiso", lat: 0.3930, lon: 32.6640 },
+      { name: "Gayaza, Wakiso", lat: 0.4460, lon: 32.6110 },
+      { name: "Matugga, Wakiso", lat: 0.4300, lon: 32.5250 },
+      { name: "Mpigi Town", lat: 0.2276, lon: 32.3240 },
+      { name: "Kalangala Town", lat: -0.3089, lon: 32.2250 },
+      { name: "Rakai Town", lat: -0.7200, lon: 31.4040 },
+      { name: "Sembabule Town", lat: -0.0770, lon: 31.4560 },
+      { name: "Ibanda Town", lat: -0.1340, lon: 30.4960 },
+      { name: "Kamwenge Town", lat: 0.1860, lon: 30.4540 },
+      { name: "Bundibugyo Town", lat: 0.7110, lon: 30.0630 },
+      { name: "Pallisa Town", lat: 1.1450, lon: 33.7090 },
+      { name: "Kumi Town", lat: 1.4608, lon: 33.9361 },
+      { name: "Katakwi Town", lat: 1.8910, lon: 33.9660 },
+      { name: "Apac Town", lat: 1.9750, lon: 32.5350 },
+      { name: "Dokolo Town", lat: 1.9160, lon: 33.1720 },
+      { name: "Pader Town", lat: 3.0500, lon: 33.0000 },
+      { name: "Kitgum Road, Gulu", lat: 2.7900, lon: 32.3050 }
+    ].sort((a, b) => a.name.localeCompare(b.name));
+
+    const resolvedPlaces = { pickup: null, dropoff: null };
+    const UG_BOUNDS = { minLat: -1.5, maxLat: 4.3, minLon: 29.55, maxLon: 35.05 };
+
+    function isInUganda(lat, lon) {
+      return lat >= UG_BOUNDS.minLat && lat <= UG_BOUNDS.maxLat && lon >= UG_BOUNDS.minLon && lon <= UG_BOUNDS.maxLon;
+    }
+
+    function findPlace(name) {
+      return UGANDAN_PLACES.find(place => place.name.toLowerCase() === String(name || '').trim().toLowerCase());
+    }
+
+    function haversineKm(a, b) {
+      const toRad = deg => deg * Math.PI / 180;
+      const dLat = toRad(b.lat - a.lat);
+      const dLon = toRad(b.lon - a.lon);
+      const lat1 = toRad(a.lat);
+      const lat2 = toRad(b.lat);
+      const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+      return 6371 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+    }
+
+    let tripMap, pickupMarker, dropoffMarker, routeLine;
+
+    function populatePlaceSelects() {}
+
+    function hidePlaceResults(which) {
+      const box = document.getElementById(`trip-${which}-results`);
+      if (box) box.hidden = true;
+    }
+
+    function choosePlace(which, place) {
+      const input = document.getElementById(`trip-${which}`);
+      if (!isInUganda(place.lat, place.lon)) {
+        resolvedPlaces[which] = null;
+        input.setCustomValidity('That place is not on the map of Uganda');
+        toast('Only places in Uganda are allowed');
+        hidePlaceResults(which);
+        updateTripRoute();
+        return;
+      }
+      resolvedPlaces[which] = place;
+      input.value = place.name;
+      input.setCustomValidity('');
+      hidePlaceResults(which);
+      updateTripRoute();
+    }
+
+    async function searchUgandaPlaces(query) {
+      const q = query.trim();
+      if (q.length < 3) return [];
+      const local = UGANDAN_PLACES
+        .filter(place => place.name.toLowerCase().includes(q.toLowerCase()))
+        .slice(0, 5)
+        .map(place => ({ ...place, kind: 'Listed place' }));
+      try {
+        const url = `https://nominatim.openstreetmap.org/search?format=jsonv2&addressdetails=1&countrycodes=ug&limit=8&dedupe=1&viewbox=29.55,-1.5,35.05,4.3&bounded=0&q=${encodeURIComponent(q + ', Uganda')}`;
+        const res = await fetch(url, { headers: { Accept: 'application/json' } });
+        if (!res.ok) return local;
+        const data = await res.json();
+        const remote = data
+          .filter(item => (item.address && item.address.country_code ? item.address.country_code === 'ug' : true))
+          .map(item => ({
+            name: item.display_name,
+            lat: Number(item.lat),
+            lon: Number(item.lon),
+            kind: [item.type, item.class].filter(Boolean).join(' · ')
+          }))
+          .filter(place => isInUganda(place.lat, place.lon));
+        const merged = [...local];
+        remote.forEach(place => {
+          if (!merged.some(existing => existing.name.toLowerCase() === place.name.toLowerCase())) {
+            merged.push(place);
+          }
+        });
+        return merged.slice(0, 10);
+      } catch {
+        return local;
+      }
+    }
+
+    function renderPlaceResults(which, places) {
+      const box = document.getElementById(`trip-${which}-results`);
+      if (!places.length) {
+        box.innerHTML = '<button type="button" disabled>No matching place, road or building in Uganda</button>';
+        box.hidden = false;
+        return;
+      }
+      box.innerHTML = places.map(place => `
+        <button type="button" data-name="${escapeHtml(place.name)}" data-lat="${place.lat}" data-lon="${place.lon}">
+          ${escapeHtml(place.name.split(',').slice(0, 3).join(','))}
+          <small>${escapeHtml(place.kind || 'Uganda map')}</small>
+        </button>
+      `).join('');
+      box.hidden = false;
+      box.querySelectorAll('button[data-name]').forEach(btn => {
+        btn.addEventListener('mousedown', (event) => event.preventDefault());
+        btn.addEventListener('click', () => {
+          choosePlace(which, {
+            name: btn.dataset.name,
+            lat: Number(btn.dataset.lat),
+            lon: Number(btn.dataset.lon)
+          });
+        });
+      });
+    }
+
+    function bindPlaceSearch(which) {
+      const input = document.getElementById(`trip-${which}`);
+      let timer = null;
+      input.addEventListener('input', () => {
+        resolvedPlaces[which] = null;
+        input.setCustomValidity('Choose a result from the Uganda map search');
+        document.getElementById('trip-distance').value = '';
+        clearTimeout(timer);
+        const query = input.value.trim();
+        if (query.length < 3) {
+          hidePlaceResults(which);
+          return;
+        }
+        timer = setTimeout(async () => {
+          renderPlaceResults(which, await searchUgandaPlaces(query));
+        }, 280);
+      });
+      input.addEventListener('blur', () => {
+        setTimeout(() => {
+          if (resolvedPlaces[which]) return;
+          const exact = findPlace(input.value);
+          if (exact) {
+            choosePlace(which, exact);
+            return;
+          }
+          if (input.value.trim()) {
+            input.setCustomValidity('Pick a matching place from the search list');
+            toast('Choose a listed Uganda place, road or building');
+          }
+          hidePlaceResults(which);
+          updateTripRoute();
+        }, 160);
+      });
+    }
+
+    function initTripMap() {
+      if (!window.L) return;
+      if (tripMap) {
+        setTimeout(() => tripMap.invalidateSize(), 180);
+        return;
+      }
+      tripMap = L.map('trip-map', { scrollWheelZoom: false }).setView([1.3733, 32.2903], 7);
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 16,
+        attribution: '&copy; OpenStreetMap'
+      }).addTo(tripMap);
+      L.rectangle([[-1.48, 29.57], [4.23, 35.03]], {
+        color: '#c2b39a',
+        weight: 1,
+        fill: false,
+        dashArray: '4 4'
+      }).addTo(tripMap);
+      setTimeout(() => tripMap.invalidateSize(), 180);
+    }
+
+    async function updateTripRoute() {
+      const pickup = resolvedPlaces.pickup;
+      const dropoff = resolvedPlaces.dropoff;
+      const distanceInput = document.getElementById('trip-distance');
+
+      if (routeLine && tripMap) {
+        tripMap.removeLayer(routeLine);
+        routeLine = null;
+      }
+      if (pickupMarker && tripMap) tripMap.removeLayer(pickupMarker);
+      if (dropoffMarker && tripMap) tripMap.removeLayer(dropoffMarker);
+      pickupMarker = null;
+      dropoffMarker = null;
+
+      if (!pickup || !dropoff) {
+        distanceInput.value = '';
+        if (tripMap) tripMap.setView([1.3733, 32.2903], 7);
+        return;
+      }
+
+      if (pickup.name === dropoff.name) {
+        distanceInput.value = '';
+        distanceInput.setCustomValidity('Pickup and drop-off must be different places');
+        return;
+      }
+      distanceInput.setCustomValidity('');
+
+      pickupMarker = L.marker([pickup.lat, pickup.lon]).addTo(tripMap).bindPopup('Pickup: ' + pickup.name);
+      dropoffMarker = L.marker([dropoff.lat, dropoff.lon]).addTo(tripMap).bindPopup('Drop-off: ' + dropoff.name);
+
+      let km = Math.round(haversineKm(pickup, dropoff) * 1.25 * 10) / 10;
+      let coords = [[pickup.lat, pickup.lon], [dropoff.lat, dropoff.lon]];
+
+      try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${pickup.lon},${pickup.lat};${dropoff.lon},${dropoff.lat}?overview=full&geometries=geojson`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.routes && data.routes[0]) {
+            km = Math.round((data.routes[0].distance / 1000) * 10) / 10;
+            coords = data.routes[0].geometry.coordinates.map(pair => [pair[1], pair[0]]);
+          }
+        }
+      } catch {
+        // Keep the Uganda-map estimate if the road service is offline.
+      }
+
+      distanceInput.value = km > 0 ? km.toFixed(1) : '';
+      routeLine = L.polyline(coords, { color: '#3f5a57', weight: 4 }).addTo(tripMap);
+      tripMap.fitBounds(routeLine.getBounds(), { padding: [28, 28] });
+    }
+
+    function escapeHtml(str) {
+      return String(str || '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+    }
+
+    function statusBadge(status) {
+      const value = status || 'Active';
+      return `<span class="badge" data-status="${escapeHtml(value)}">${escapeHtml(value)}</span>`;
+    }
+
+    function emptyRow(cols, message) {
+      return `<tr><td colspan="${cols}" class="empty">${escapeHtml(message)}</td></tr>`;
+    }
+
+    function toast(message) {
+      const el = document.getElementById('toast');
+      el.textContent = message;
+      el.classList.add('show');
+      clearTimeout(toast._t);
+      toast._t = setTimeout(() => el.classList.remove('show'), 2200);
+    }
+
+    let taxis = store.get('taxis', []);
+    let drivers = store.get('drivers', []);
+    let trips = store.get('trips', []);
+    let fuelRecords = store.get('fuelRecords', []);
+    let maintenanceRecords = store.get('maintenanceRecords', []);
+
+    const navButtons = document.querySelectorAll('nav button');
+    const sections = document.querySelectorAll('.content section');
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('nav-overlay');
+
+    function closeMenu() {
+      sidebar.classList.remove('open');
+      overlay.classList.remove('show');
+    }
+
+    document.getElementById('menu-toggle').addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+      overlay.classList.toggle('show');
+    });
+    overlay.addEventListener('click', closeMenu);
+
+    function showSection(id) {
+      sections.forEach(sec => sec.classList.toggle('active', sec.id === id));
+      navButtons.forEach(btn => btn.classList.toggle('active', btn.dataset.section === id));
+      closeMenu();
+
+      if (id === 'dashboard') renderDashboard();
+      if (id === 'taxis') renderTaxis();
+      if (id === 'drivers') renderDrivers();
+      if (id === 'trips') prepareTripForm();
+      if (id === 'fuel') {
+        prepareFuelForm();
+        renderFuelTable();
+      }
+      if (id === 'maintenance') {
+        prepareMaintenanceForm();
+        renderMaintenanceTable();
+      }
+      if (id === 'collected') renderCollected();
+      if (id === 'view-all') {
+        populateViewAllFilters();
+        applyViewAllFilters();
+      }
+    }
+
+    navButtons.forEach(btn => {
+      btn.addEventListener('click', () => showSection(btn.dataset.section));
+    });
+
+    function countBy(list, key, fallback) {
+      return list.reduce((acc, item) => {
+        const value = item[key] || fallback;
+        acc[value] = (acc[value] || 0) + 1;
+        return acc;
+      }, {});
+    }
+
+    function taxiLabel(id) {
+      const taxi = taxis.find(item => item.id === id);
+      return taxi ? taxi.plate : 'Unknown taxi';
+    }
+
+    function driverLabel(id) {
+      const driver = drivers.find(item => item.id === id);
+      return driver ? driver.name : 'Unknown driver';
+    }
+
+    function summaryBlock(title, rows, emptyText) {
+      if (!rows.length) return emptyText ? `<p class="empty">${escapeHtml(emptyText)}</p>` : '';
+      return `<h3>${escapeHtml(title)}</h3>${rows.map(row => `
+        <div class="dash-row"><span>${escapeHtml(row.left)}</span><strong>${escapeHtml(row.right)}</strong></div>
+      `).join('')}`;
+    }
+
+    function renderDashboard() {
+      const revenue = trips.reduce((sum, t) => sum + tripRevenue(t), 0);
+      const fuelCost = fuelRecords.reduce((sum, f) => sum + (Number(f.amount) || 0), 0);
+      const maintCost = maintenanceRecords.reduce((sum, m) => sum + (Number(m.totalCost) || 0), 0);
+      document.getElementById('stat-taxis').textContent = taxis.length;
+      document.getElementById('stat-drivers').textContent = drivers.length;
+      document.getElementById('stat-trips').textContent = trips.length;
+      document.getElementById('stat-revenue').textContent = revenue.toLocaleString();
+      document.getElementById('stat-fuel').textContent = fuelCost.toLocaleString();
+      document.getElementById('stat-maintenance').textContent = maintCost.toLocaleString();
+
+      const taxiStatus = countBy(taxis, 'status', 'Active');
+      document.getElementById('dash-taxis-summary').innerHTML = summaryBlock(
+        'Fleet by status',
+        Object.entries(taxiStatus).map(([left, right]) => ({ left, right: String(right) })),
+        'No taxis yet. Open the taxis page to add one.'
+      ) + summaryBlock(
+        'Vehicles',
+        taxis.slice(0, 6).map(t => ({ left: t.plate, right: t.status || 'Active' })),
+        ''
+      );
+
+      const driverStatus = countBy(drivers, 'status', 'Active');
+      document.getElementById('dash-drivers-summary').innerHTML = summaryBlock(
+        'Drivers by status',
+        Object.entries(driverStatus).map(([left, right]) => ({ left, right: String(right) })),
+        'No drivers yet. Open the drivers page to add one.'
+      ) + summaryBlock(
+        'Team',
+        drivers.slice(0, 6).map(d => ({ left: d.name, right: d.phone || d.status || '' })),
+        ''
+      );
+
+      const recentTrips = [...trips].reverse().slice(0, 6);
+      document.getElementById('dash-trips-summary').innerHTML = summaryBlock(
+        'Latest trips',
+        recentTrips.map(t => ({
+          left: `${formatTripWhen(t)} · ${t.pickup || ''} → ${t.dropoff || ''}`,
+          right: `${tripRevenue(t).toLocaleString()} UGX`
+        })),
+        'No trips recorded yet.'
+      );
+
+      document.getElementById('dash-revenue-summary').innerHTML = summaryBlock(
+        'Collections snapshot',
+        [
+          { left: 'Trip revenue', right: `${revenue.toLocaleString()} UGX` },
+          { left: 'Average trip revenue', right: `${trips.length ? Math.round(revenue / trips.length).toLocaleString() : 0} UGX` },
+          { left: 'Net after fuel & maintenance', right: `${(revenue - fuelCost - maintCost).toLocaleString()} UGX` }
+        ],
+        ''
+      );
+
+      const recentFuel = [...fuelRecords].reverse().slice(0, 6);
+      document.getElementById('dash-fuel-summary').innerHTML = summaryBlock(
+        'Latest fuel fills',
+        recentFuel.map(f => ({
+          left: `${f.date || ''} · ${taxiLabel(f.taxiId)}`,
+          right: `${(Number(f.amount) || 0).toLocaleString()} UGX`
+        })),
+        'No fuel records yet.'
+      );
+
+      const recentMaint = [...maintenanceRecords].reverse().slice(0, 6);
+      document.getElementById('dash-maintenance-summary').innerHTML = summaryBlock(
+        'Latest workshop jobs',
+        recentMaint.map(m => ({
+          left: `${m.date || ''} · ${taxiLabel(m.taxiId)} · ${m.serviceType || ''}`,
+          right: `${(Number(m.totalCost) || 0).toLocaleString()} UGX`
+        })),
+        'No maintenance records yet.'
+      );
+    }
+
+    document.querySelectorAll('#dashboard-cards .dash-card-toggle').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const card = btn.closest('.dash-card');
+        const willOpen = !card.classList.contains('open');
+        document.querySelectorAll('#dashboard-cards .dash-card').forEach(item => {
+          item.classList.remove('open');
+          const toggle = item.querySelector('.dash-card-toggle');
+          if (toggle) toggle.setAttribute('aria-expanded', 'false');
+        });
+        if (willOpen) {
+          card.classList.add('open');
+          btn.setAttribute('aria-expanded', 'true');
+          card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      });
+    });
+
+    document.querySelectorAll('#dashboard-cards .dash-open-page').forEach(btn => {
+      btn.addEventListener('click', (event) => {
+        event.stopPropagation();
+        showSection(btn.dataset.section);
+      });
+    });
+
+    const taxiForm = document.getElementById('taxi-form');
+    const taxiIdInput = document.getElementById('taxi-id');
+    const taxisTableBody = document.getElementById('taxis-table-body');
+
+    function renderTaxis() {
+      taxisTableBody.innerHTML = '';
+      if (!taxis.length) {
+        taxisTableBody.innerHTML = emptyRow(7, 'No taxis yet. Add the first vehicle above.');
+        return;
+      }
+      taxis.forEach(t => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(t.plate)}</td>
+          <td>${escapeHtml(t.make || '')}</td>
+          <td>${escapeHtml(t.model || '')}</td>
+          <td>${escapeHtml(t.year || '')}</td>
+          <td>${escapeHtml(t.color || '')}</td>
+          <td>${statusBadge(t.status)}</td>
+          <td class="actions">
+            <button class="btn-secondary" data-edit="${t.id}">Edit</button>
+            <button class="btn-danger" data-delete="${t.id}">Delete</button>
+          </td>`;
+        taxisTableBody.appendChild(tr);
+      });
+      taxisTableBody.querySelectorAll('button[data-edit]').forEach(btn => {
+        btn.addEventListener('click', () => editTaxi(btn.dataset.edit));
+      });
+      taxisTableBody.querySelectorAll('button[data-delete]').forEach(btn => {
+        btn.addEventListener('click', () => deleteTaxi(btn.dataset.delete));
+      });
+    }
+
+    taxiForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = taxiIdInput.value || generateId();
+      const data = {
+        id,
+        plate: document.getElementById('taxi-plate').value.trim().toUpperCase(),
+        make: document.getElementById('taxi-make').value.trim(),
+        model: document.getElementById('taxi-model').value.trim(),
+        year: document.getElementById('taxi-year').value.trim(),
+        color: document.getElementById('taxi-color').value.trim(),
+        status: document.getElementById('taxi-status').value
+      };
+      const existingIndex = taxis.findIndex(t => t.id === id);
+      if (existingIndex >= 0) taxis[existingIndex] = data;
+      else taxis.push(data);
+      store.set('taxis', taxis);
+      taxiForm.reset();
+      taxiIdInput.value = '';
+      renderTaxis();
+      renderDashboard();
+      toast('Taxi saved');
+    });
+
+    document.getElementById('taxi-clear').addEventListener('click', () => {
+      taxiForm.reset();
+      taxiIdInput.value = '';
+    });
+
+    function editTaxi(id) {
+      const t = taxis.find(x => x.id === id);
+      if (!t) return;
+      taxiIdInput.value = t.id;
+      document.getElementById('taxi-plate').value = t.plate || '';
+      document.getElementById('taxi-make').value = t.make || '';
+      document.getElementById('taxi-model').value = t.model || '';
+      document.getElementById('taxi-year').value = t.year || '';
+      document.getElementById('taxi-color').value = t.color || '';
+      document.getElementById('taxi-status').value = t.status || 'Active';
+      showSection('taxis');
+    }
+
+    function deleteTaxi(id) {
+      if (!confirm('Delete this taxi?')) return;
+      taxis = taxis.filter(t => t.id !== id);
+      store.set('taxis', taxis);
+      renderTaxis();
+      renderDashboard();
+      toast('Taxi deleted');
+    }
+
+    const driverForm = document.getElementById('driver-form');
+    const driverIdInput = document.getElementById('driver-id');
+    const driversTableBody = document.getElementById('drivers-table-body');
+
+    function renderDrivers() {
+      driversTableBody.innerHTML = '';
+      if (!drivers.length) {
+        driversTableBody.innerHTML = emptyRow(5, 'No drivers yet. Add a driver to start assigning trips.');
+        return;
+      }
+      drivers.forEach(d => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(d.name)}</td>
+          <td>${escapeHtml(d.phone || '')}</td>
+          <td>${escapeHtml(d.license || '')}</td>
+          <td>${statusBadge(d.status)}</td>
+          <td class="actions">
+            <button class="btn-secondary" data-edit="${d.id}">Edit</button>
+            <button class="btn-danger" data-delete="${d.id}">Delete</button>
+          </td>`;
+        driversTableBody.appendChild(tr);
+      });
+      driversTableBody.querySelectorAll('button[data-edit]').forEach(btn => {
+        btn.addEventListener('click', () => editDriver(btn.dataset.edit));
+      });
+      driversTableBody.querySelectorAll('button[data-delete]').forEach(btn => {
+        btn.addEventListener('click', () => deleteDriver(btn.dataset.delete));
+      });
+    }
+
+    driverForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = driverIdInput.value || generateId();
+      const data = {
+        id,
+        name: document.getElementById('driver-name').value.trim(),
+        phone: document.getElementById('driver-phone').value.trim(),
+        license: document.getElementById('driver-license').value.trim().toUpperCase(),
+        status: document.getElementById('driver-status').value
+      };
+      const existingIndex = drivers.findIndex(d => d.id === id);
+      if (existingIndex >= 0) drivers[existingIndex] = data;
+      else drivers.push(data);
+      store.set('drivers', drivers);
+      driverForm.reset();
+      driverIdInput.value = '';
+      renderDrivers();
+      renderDashboard();
+      toast('Driver saved');
+    });
+
+    document.getElementById('driver-clear').addEventListener('click', () => {
+      driverForm.reset();
+      driverIdInput.value = '';
+    });
+
+    function editDriver(id) {
+      const d = drivers.find(x => x.id === id);
+      if (!d) return;
+      driverIdInput.value = d.id;
+      document.getElementById('driver-name').value = d.name || '';
+      document.getElementById('driver-phone').value = d.phone || '';
+      document.getElementById('driver-license').value = d.license || '';
+      document.getElementById('driver-status').value = d.status || 'Active';
+      showSection('drivers');
+    }
+
+    function deleteDriver(id) {
+      if (!confirm('Delete this driver?')) return;
+      drivers = drivers.filter(d => d.id !== id);
+      store.set('drivers', drivers);
+      renderDrivers();
+      renderDashboard();
+      toast('Driver deleted');
+    }
+
+    const tripForm = document.getElementById('trip-form');
+    const tripIdInput = document.getElementById('trip-id');
+
+    function fillSelect(select, items, getLabel, placeholder, preserve) {
+      const current = preserve ? select.value : '';
+      select.innerHTML = `<option value="">${placeholder}</option>`;
+      items.forEach(item => {
+        const opt = document.createElement('option');
+        opt.value = item.id;
+        opt.textContent = getLabel(item);
+        select.appendChild(opt);
+      });
+      if (current && [...select.options].some(option => option.value === current)) {
+        select.value = current;
+      }
+    }
+
+    function todayIso() {
+      return new Date().toISOString().slice(0, 10);
+    }
+
+    function nowTime() {
+      const now = new Date();
+      return `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+    }
+
+    function formatTripWhen(trip) {
+      if (!trip) return '';
+      if (trip.time) return `${trip.date || ''} ${trip.time}`;
+      return trip.date || '';
+    }
+
+    function tripRevenue(trip) {
+      const fare = Number(trip && trip.fare) || 0;
+      const passengers = Number(trip && trip.passengers) || 0;
+      return fare * (passengers || 1);
+    }
+
+    function prepareTripForm() {
+      fillSelect(document.getElementById('trip-taxi'), taxis, t => `${t.plate}${t.make ? ' - ' + t.make : ''}`, 'Select taxi');
+      fillSelect(document.getElementById('trip-driver'), drivers, d => d.name, 'Select driver');
+      document.getElementById('trip-date').value = todayIso();
+      document.getElementById('trip-time').value = nowTime();
+      initTripMap();
+      updateTripRoute();
+    }
+
+    bindPlaceSearch('pickup');
+    bindPlaceSearch('dropoff');
+
+    tripForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const pickup = resolvedPlaces.pickup;
+      const dropoff = resolvedPlaces.dropoff;
+      if (!pickup || !dropoff) {
+        toast('Choose valid pickup and drop-off places in Uganda');
+        return;
+      }
+      if (pickup.name === dropoff.name) {
+        toast('Pickup and drop-off must be different');
+        return;
+      }
+      if (!document.getElementById('trip-distance').value) {
+        toast('Wait for the distance to calculate');
+        return;
+      }
+      const id = tripIdInput.value || generateId();
+      const data = {
+        id,
+        date: document.getElementById('trip-date').value,
+        time: document.getElementById('trip-time').value,
+        taxiId: document.getElementById('trip-taxi').value,
+        driverId: document.getElementById('trip-driver').value,
+        pickup: pickup.name,
+        dropoff: dropoff.name,
+        distance: document.getElementById('trip-distance').value.trim(),
+        fare: Number(document.getElementById('trip-fare').value) || 0,
+        passengers: Number(document.getElementById('trip-passengers').value) || 0,
+        notes: document.getElementById('trip-notes').value.trim()
+      };
+      const existingIndex = trips.findIndex(t => t.id === id);
+      if (existingIndex >= 0) trips[existingIndex] = data;
+      else trips.push(data);
+      store.set('trips', trips);
+      tripForm.reset();
+      tripIdInput.value = '';
+      resolvedPlaces.pickup = null;
+      resolvedPlaces.dropoff = null;
+      prepareTripForm();
+      renderDashboard();
+      toast('Trip saved');
+    });
+
+    document.getElementById('trip-clear').addEventListener('click', () => {
+      tripForm.reset();
+      tripIdInput.value = '';
+      resolvedPlaces.pickup = null;
+      resolvedPlaces.dropoff = null;
+      hidePlaceResults('pickup');
+      hidePlaceResults('dropoff');
+      prepareTripForm();
+    });
+
+    const fuelForm = document.getElementById('fuel-form');
+    const fuelIdInput = document.getElementById('fuel-id');
+    const fuelTableBody = document.getElementById('fuel-table-body');
+
+    function prepareFuelForm() {
+      fillSelect(document.getElementById('fuel-taxi'), taxis, t => t.plate, 'Select taxi');
+      fillSelect(document.getElementById('fuel-driver'), drivers, d => d.name, 'Select driver');
+      document.getElementById('fuel-date').value = todayIso();
+      const litresInput = document.getElementById('fuel-litres');
+      const rateInput = document.getElementById('fuel-rate');
+      const amountInput = document.getElementById('fuel-amount');
+      function updateAmount() {
+        const litres = parseFloat(litresInput.value) || 0;
+        const rate = parseFloat(rateInput.value) || 0;
+        if (litres > 0 && rate > 0) amountInput.value = Math.round(litres * rate);
+      }
+      litresInput.oninput = updateAmount;
+      rateInput.oninput = updateAmount;
+    }
+
+    fuelForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = fuelIdInput.value || generateId();
+      const data = {
+        id,
+        date: document.getElementById('fuel-date').value,
+        taxiId: document.getElementById('fuel-taxi').value,
+        driverId: document.getElementById('fuel-driver').value,
+        station: document.getElementById('fuel-station').value.trim(),
+        fuelType: document.getElementById('fuel-type').value,
+        litres: Number(document.getElementById('fuel-litres').value) || 0,
+        rate: Number(document.getElementById('fuel-rate').value) || 0,
+        amount: Number(document.getElementById('fuel-amount').value) || 0,
+        odometer: Number(document.getElementById('fuel-odometer').value) || 0,
+        payment: document.getElementById('fuel-payment').value,
+        notes: document.getElementById('fuel-notes').value.trim()
+      };
+      const existingIndex = fuelRecords.findIndex(f => f.id === id);
+      if (existingIndex >= 0) fuelRecords[existingIndex] = data;
+      else fuelRecords.push(data);
+      store.set('fuelRecords', fuelRecords);
+      fuelForm.reset();
+      fuelIdInput.value = '';
+      prepareFuelForm();
+      renderFuelTable();
+      renderDashboard();
+      toast('Fuel record saved');
+    });
+
+    document.getElementById('fuel-clear').addEventListener('click', () => {
+      fuelForm.reset();
+      fuelIdInput.value = '';
+      prepareFuelForm();
+    });
+
+    function renderFuelTable() {
+      fuelTableBody.innerHTML = '';
+      const list = [...fuelRecords].reverse().slice(0, 20);
+      if (!list.length) {
+        fuelTableBody.innerHTML = emptyRow(9, 'No fuel records yet.');
+        return;
+      }
+      list.forEach(f => {
+        const taxi = taxis.find(x => x.id === f.taxiId);
+        const driver = drivers.find(x => x.id === f.driverId);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(f.date || '')}</td>
+          <td>${escapeHtml(taxi ? taxi.plate : '')}</td>
+          <td>${escapeHtml(driver ? driver.name : '')}</td>
+          <td>${escapeHtml(f.station || '')}</td>
+          <td>${escapeHtml(f.fuelType || '')}</td>
+          <td>${(f.litres || 0).toLocaleString()}</td>
+          <td>${(f.rate || 0).toLocaleString()}</td>
+          <td>${(f.amount || 0).toLocaleString()}</td>
+          <td class="actions">
+            <button class="btn-secondary" data-edit="${f.id}">Edit</button>
+            <button class="btn-danger" data-delete="${f.id}">Delete</button>
+          </td>`;
+        fuelTableBody.appendChild(tr);
+      });
+      fuelTableBody.querySelectorAll('button[data-edit]').forEach(btn => {
+        btn.addEventListener('click', () => editFuel(btn.dataset.edit));
+      });
+      fuelTableBody.querySelectorAll('button[data-delete]').forEach(btn => {
+        btn.addEventListener('click', () => deleteFuel(btn.dataset.delete));
+      });
+    }
+
+    function editFuel(id) {
+      const f = fuelRecords.find(x => x.id === id);
+      if (!f) return;
+      showSection('fuel');
+      prepareFuelForm();
+      fuelIdInput.value = f.id;
+      document.getElementById('fuel-date').value = f.date || '';
+      document.getElementById('fuel-taxi').value = f.taxiId || '';
+      document.getElementById('fuel-driver').value = f.driverId || '';
+      document.getElementById('fuel-station').value = f.station || '';
+      document.getElementById('fuel-type').value = f.fuelType || 'Petrol';
+      document.getElementById('fuel-litres').value = f.litres || 0;
+      document.getElementById('fuel-rate').value = f.rate || 0;
+      document.getElementById('fuel-amount').value = f.amount || 0;
+      document.getElementById('fuel-odometer').value = f.odometer || 0;
+      document.getElementById('fuel-payment').value = f.payment || 'Cash';
+      document.getElementById('fuel-notes').value = f.notes || '';
+    }
+
+    function deleteFuel(id) {
+      if (!confirm('Delete this fuel record?')) return;
+      fuelRecords = fuelRecords.filter(f => f.id !== id);
+      store.set('fuelRecords', fuelRecords);
+      renderFuelTable();
+      renderDashboard();
+      toast('Fuel record deleted');
+    }
+
+    const maintenanceForm = document.getElementById('maintenance-form');
+    const maintenanceIdInput = document.getElementById('maintenance-id');
+    const maintenanceTableBody = document.getElementById('maintenance-table-body');
+
+    function prepareMaintenanceForm() {
+      fillSelect(document.getElementById('maint-taxi'), taxis, t => t.plate, 'Select taxi');
+      document.getElementById('maint-date').value = todayIso();
+      const partsInput = document.getElementById('maint-parts-cost');
+      const laborInput = document.getElementById('maint-labor-cost');
+      const totalInput = document.getElementById('maint-total-cost');
+      function updateTotal() {
+        totalInput.value = (Number(partsInput.value) || 0) + (Number(laborInput.value) || 0);
+      }
+      partsInput.oninput = updateTotal;
+      laborInput.oninput = updateTotal;
+    }
+
+    maintenanceForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const id = maintenanceIdInput.value || generateId();
+      const data = {
+        id,
+        date: document.getElementById('maint-date').value,
+        taxiId: document.getElementById('maint-taxi').value,
+        serviceType: document.getElementById('maint-service-type').value,
+        description: document.getElementById('maint-description').value.trim(),
+        odometer: Number(document.getElementById('maint-odometer').value) || 0,
+        partsCost: Number(document.getElementById('maint-parts-cost').value) || 0,
+        laborCost: Number(document.getElementById('maint-labor-cost').value) || 0,
+        totalCost: Number(document.getElementById('maint-total-cost').value) || 0,
+        provider: document.getElementById('maint-provider').value.trim(),
+        notes: document.getElementById('maint-notes').value.trim()
+      };
+      const existingIndex = maintenanceRecords.findIndex(m => m.id === id);
+      if (existingIndex >= 0) maintenanceRecords[existingIndex] = data;
+      else maintenanceRecords.push(data);
+      store.set('maintenanceRecords', maintenanceRecords);
+      maintenanceForm.reset();
+      maintenanceIdInput.value = '';
+      prepareMaintenanceForm();
+      renderMaintenanceTable();
+      renderDashboard();
+      toast('Maintenance record saved');
+    });
+
+    document.getElementById('maintenance-clear').addEventListener('click', () => {
+      maintenanceForm.reset();
+      maintenanceIdInput.value = '';
+      prepareMaintenanceForm();
+    });
+
+    function renderMaintenanceTable() {
+      maintenanceTableBody.innerHTML = '';
+      const list = [...maintenanceRecords].reverse().slice(0, 20);
+      if (!list.length) {
+        maintenanceTableBody.innerHTML = emptyRow(9, 'No maintenance records yet.');
+        return;
+      }
+      list.forEach(m => {
+        const taxi = taxis.find(x => x.id === m.taxiId);
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${escapeHtml(m.date || '')}</td>
+          <td>${escapeHtml(taxi ? taxi.plate : '')}</td>
+          <td>${escapeHtml(m.serviceType || '')}</td>
+          <td>${escapeHtml(m.description || '')}</td>
+          <td>${(m.partsCost || 0).toLocaleString()}</td>
+          <td>${(m.laborCost || 0).toLocaleString()}</td>
+          <td>${(m.totalCost || 0).toLocaleString()}</td>
+          <td>${escapeHtml(m.provider || '')}</td>
+          <td class="actions">
+            <button class="btn-secondary" data-edit="${m.id}">Edit</button>
+            <button class="btn-danger" data-delete="${m.id}">Delete</button>
+          </td>`;
+        maintenanceTableBody.appendChild(tr);
+      });
+      maintenanceTableBody.querySelectorAll('button[data-edit]').forEach(btn => {
+        btn.addEventListener('click', () => editMaintenance(btn.dataset.edit));
+      });
+      maintenanceTableBody.querySelectorAll('button[data-delete]').forEach(btn => {
+        btn.addEventListener('click', () => deleteMaintenance(btn.dataset.delete));
+      });
+    }
+
+    function editMaintenance(id) {
+      const m = maintenanceRecords.find(x => x.id === id);
+      if (!m) return;
+      showSection('maintenance');
+      prepareMaintenanceForm();
+      maintenanceIdInput.value = m.id;
+      document.getElementById('maint-date').value = m.date || '';
+      document.getElementById('maint-taxi').value = m.taxiId || '';
+      document.getElementById('maint-service-type').value = m.serviceType || 'Routine Service';
+      document.getElementById('maint-description').value = m.description || '';
+      document.getElementById('maint-odometer').value = m.odometer || 0;
+      document.getElementById('maint-parts-cost').value = m.partsCost || 0;
+      document.getElementById('maint-labor-cost').value = m.laborCost || 0;
+      document.getElementById('maint-total-cost').value = m.totalCost || 0;
+      document.getElementById('maint-provider').value = m.provider || '';
+      document.getElementById('maint-notes').value = m.notes || '';
+    }
+
+    function deleteMaintenance(id) {
+      if (!confirm('Delete this maintenance record?')) return;
+      maintenanceRecords = maintenanceRecords.filter(m => m.id !== id);
+      store.set('maintenanceRecords', maintenanceRecords);
+      renderMaintenanceTable();
+      renderDashboard();
+      toast('Maintenance record deleted');
+    }
+
+    function filteredTrips(from, to) {
+      return trips.filter(t => {
+        if (from && t.date < from) return false;
+        if (to && t.date > to) return false;
+        return true;
+      });
+    }
+
+    function renderCollected() {
+      const from = document.getElementById('coll-from').value;
+      const to = document.getElementById('coll-to').value;
+      const rows = filteredTrips(from, to);
+      const total = rows.reduce((sum, t) => sum + tripRevenue(t), 0);
+      document.getElementById('coll-total').textContent = total.toLocaleString();
+      document.getElementById('coll-trips-count').textContent = rows.length;
+      document.getElementById('coll-avg-fare').textContent = rows.length ? Math.round(total / rows.length).toLocaleString() : '0';
+
+      const byTaxi = {};
+      const byDriver = {};
+      rows.forEach(t => {
+        const taxi = taxis.find(x => x.id === t.taxiId);
+        const driver = drivers.find(x => x.id === t.driverId);
+        const taxiKey = taxi ? taxi.plate : 'Unknown taxi';
+        const driverKey = driver ? driver.name : 'Unknown driver';
+        byTaxi[taxiKey] = (byTaxi[taxiKey] || 0) + tripRevenue(t);
+        byDriver[driverKey] = (byDriver[driverKey] || 0) + tripRevenue(t);
+      });
+
+      const taxiBox = document.getElementById('coll-by-taxi');
+      const driverBox = document.getElementById('coll-by-driver');
+      taxiBox.innerHTML = Object.keys(byTaxi).length
+        ? Object.entries(byTaxi).map(([k, v]) => `<div class="summary-item"><strong>${escapeHtml(k)}</strong><div>${v.toLocaleString()} UGX</div></div>`).join('')
+        : '<p class="empty">No trip collections in this range.</p>';
+      driverBox.innerHTML = Object.keys(byDriver).length
+        ? Object.entries(byDriver).map(([k, v]) => `<div class="summary-item"><strong>${escapeHtml(k)}</strong><div>${v.toLocaleString()} UGX</div></div>`).join('')
+        : '<p class="empty">No driver collections in this range.</p>';
+    }
+
+    document.getElementById('collected-filters').addEventListener('submit', (event) => {
+      event.preventDefault();
+      renderCollected();
+      toast('Collection filters applied');
+    });
+    document.getElementById('coll-clear').addEventListener('click', () => {
+      document.getElementById('coll-from').value = '';
+      document.getElementById('coll-to').value = '';
+      renderCollected();
+    });
+    document.getElementById('coll-from').addEventListener('change', renderCollected);
+    document.getElementById('coll-to').addEventListener('change', renderCollected);
+
+    const filterType = document.getElementById('filter-type');
+    const filterFrom = document.getElementById('filter-from');
+    const filterTo = document.getElementById('filter-to');
+    const filterTaxi = document.getElementById('filter-taxi');
+    const filterDriver = document.getElementById('filter-driver');
+    const viewAllTitle = document.getElementById('view-all-title');
+    const viewAllTableHead = document.querySelector('#view-all-table thead');
+    const viewAllBody = document.getElementById('view-all-body');
+
+    function inDateRange(dateValue, from, to) {
+      const date = String(dateValue || '').slice(0, 10);
+      if (from && to && from > to) return false;
+      if (from && (!date || date < from)) return false;
+      if (to && (!date || date > to)) return false;
+      return true;
+    }
+
+    function populateViewAllFilters() {
+      fillSelect(filterTaxi, taxis, t => t.plate, 'All', true);
+      fillSelect(filterDriver, drivers, d => d.name, 'All', true);
+      document.getElementById('filter-driver-wrap').style.display = filterType.value === 'maintenance' ? 'none' : '';
+    }
+
+    function applyViewAllFilters() {
+      const type = filterType.value;
+      const from = filterFrom.value;
+      const to = filterTo.value;
+      const taxiId = filterTaxi.value;
+      const driverId = filterType.value === 'maintenance' ? '' : filterDriver.value;
+      if (from && to && from > to) {
+        toast('The From date must be before the To date');
+        document.getElementById('view-all-count').textContent = 'Fix the date range to see records';
+        return;
+      }
+      populateViewAllFilters();
+      viewAllTitle.textContent = type === 'trips' ? 'Trips' : type === 'fuel' ? 'Fuel records' : 'Maintenance records';
+      let rows = [];
+      if (type === 'trips') {
+        rows = trips.filter(t => inDateRange(t.date, from, to) && (!taxiId || t.taxiId === taxiId) && (!driverId || t.driverId === driverId));
+      } else if (type === 'fuel') {
+        rows = fuelRecords.filter(f => inDateRange(f.date, from, to) && (!taxiId || f.taxiId === taxiId) && (!driverId || f.driverId === driverId));
+      } else {
+        rows = maintenanceRecords.filter(m => inDateRange(m.date, from, to) && (!taxiId || m.taxiId === taxiId));
+      }
+      document.getElementById('view-all-count').textContent = `Showing ${rows.length} record${rows.length === 1 ? '' : 's'}`;
+      renderViewAllTable(type, rows);
+    }
+
+    function renderViewAllTable(type, rows) {
+      viewAllTableHead.innerHTML = '';
+      viewAllBody.innerHTML = '';
+      let headers = [];
+      if (type === 'trips') headers = ['Date','Time','Taxi','Driver','Pickup','Drop-off','Distance','Fare','Passengers','Revenue','Notes'];
+      else if (type === 'fuel') headers = ['Date','Taxi','Driver','Station','Type','Litres','Rate','Amount','Payment'];
+      else headers = ['Date','Taxi','Type','Description','Parts','Labor','Total','Provider'];
+      const headRow = document.createElement('tr');
+      headers.forEach(h => {
+        const th = document.createElement('th');
+        th.textContent = h;
+        headRow.appendChild(th);
+      });
+      viewAllTableHead.appendChild(headRow);
+
+      if (!rows.length) {
+        viewAllBody.innerHTML = emptyRow(headers.length, 'No matching records.');
+        return;
+      }
+
+      rows.forEach(item => {
+        const taxi = taxis.find(x => x.id === item.taxiId);
+        const driver = drivers.find(x => x.id === item.driverId);
+        const tr = document.createElement('tr');
+        if (type === 'trips') {
+          tr.innerHTML = `<td>${escapeHtml(item.date || '')}</td><td>${escapeHtml(item.time || '')}</td><td>${escapeHtml(taxi ? taxi.plate : '')}</td><td>${escapeHtml(driver ? driver.name : '')}</td><td>${escapeHtml(item.pickup || '')}</td><td>${escapeHtml(item.dropoff || '')}</td><td>${escapeHtml(item.distance || '')}</td><td>${(item.fare || 0).toLocaleString()}</td><td>${escapeHtml(item.passengers || '')}</td><td>${tripRevenue(item).toLocaleString()}</td><td>${escapeHtml(item.notes || '')}</td>`;
+        } else if (type === 'fuel') {
+          tr.innerHTML = `<td>${escapeHtml(item.date || '')}</td><td>${escapeHtml(taxi ? taxi.plate : '')}</td><td>${escapeHtml(driver ? driver.name : '')}</td><td>${escapeHtml(item.station || '')}</td><td>${escapeHtml(item.fuelType || '')}</td><td>${(item.litres || 0).toLocaleString()}</td><td>${(item.rate || 0).toLocaleString()}</td><td>${(item.amount || 0).toLocaleString()}</td><td>${escapeHtml(item.payment || '')}</td>`;
+        } else {
+          tr.innerHTML = `<td>${escapeHtml(item.date || '')}</td><td>${escapeHtml(taxi ? taxi.plate : '')}</td><td>${escapeHtml(item.serviceType || '')}</td><td>${escapeHtml(item.description || '')}</td><td>${(item.partsCost || 0).toLocaleString()}</td><td>${(item.laborCost || 0).toLocaleString()}</td><td>${(item.totalCost || 0).toLocaleString()}</td><td>${escapeHtml(item.provider || '')}</td>`;
+        }
+        viewAllBody.appendChild(tr);
+      });
+    }
+
+    document.getElementById('view-all-filters').addEventListener('submit', (event) => {
+      event.preventDefault();
+      applyViewAllFilters();
+      toast('Filters applied');
+    });
+    document.getElementById('clear-filters').addEventListener('click', () => {
+      filterType.value = 'trips';
+      filterFrom.value = '';
+      filterTo.value = '';
+      filterTaxi.value = '';
+      filterDriver.value = '';
+      applyViewAllFilters();
+    });
+    [filterType, filterFrom, filterTo, filterTaxi, filterDriver].forEach(control => {
+      control.addEventListener('change', applyViewAllFilters);
+    });
+
+    document.querySelectorAll('[data-print]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const title = btn.textContent.trim() || 'Report';
+        const previous = document.title;
+        document.title = `Mama Africa Transport — ${title}`;
+        window.print();
+        document.title = previous;
+      });
+    });
+
+    document.getElementById('export-csv').addEventListener('click', () => {
+      const type = filterType.value;
+      const from = filterFrom.value;
+      const to = filterTo.value;
+      const taxiId = filterTaxi.value;
+      const driverId = filterDriver.value;
+      let rows = [];
+      let headers = [];
+      if (type === 'trips') {
+        headers = ['Date','Time','TaxiPlate','DriverName','Pickup','Dropoff','Distance_km','Fare_UGX','Passengers','Revenue_UGX','Notes'];
+        rows = trips.filter(t => inDateRange(t.date, from, to) && (!taxiId || t.taxiId === taxiId) && (!driverId || t.driverId === driverId)).map(t => {
+          const taxi = taxis.find(x => x.id === t.taxiId);
+          const driver = drivers.find(x => x.id === t.driverId);
+          return [t.date || '', t.time || '', taxi ? taxi.plate : '', driver ? driver.name : '', t.pickup || '', t.dropoff || '', t.distance || '', t.fare || 0, t.passengers || '', tripRevenue(t), t.notes || ''];
+        });
+      } else if (type === 'fuel') {
+        headers = ['Date','TaxiPlate','DriverName','Station','FuelType','Litres','Rate_UGX','Amount_UGX','Payment'];
+        rows = fuelRecords.filter(f => inDateRange(f.date, from, to) && (!taxiId || f.taxiId === taxiId) && (!driverId || f.driverId === driverId)).map(f => {
+          const taxi = taxis.find(x => x.id === f.taxiId);
+          const driver = drivers.find(x => x.id === f.driverId);
+          return [f.date || '', taxi ? taxi.plate : '', driver ? driver.name : '', f.station || '', f.fuelType || '', f.litres || 0, f.rate || 0, f.amount || 0, f.payment || ''];
+        });
+      } else {
+        headers = ['Date','TaxiPlate','ServiceType','Description','Odometer','Parts_UGX','Labor_UGX','Total_UGX','Provider','Notes'];
+        rows = maintenanceRecords.filter(m => inDateRange(m.date, from, to) && (!taxiId || m.taxiId === taxiId)).map(m => {
+          const taxi = taxis.find(x => x.id === m.taxiId);
+          return [m.date || '', taxi ? taxi.plate : '', m.serviceType || '', m.description || '', m.odometer || 0, m.partsCost || 0, m.laborCost || 0, m.totalCost || 0, m.provider || '', m.notes || ''];
+        });
+      }
+      const csv = [headers.join(','), ...rows.map(r => r.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(','))].join('\n');
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${type}_export.csv`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast('CSV exported');
+    });
+
+    populatePlaceSelects();
+    populateViewAllFilters();
+    applyViewAllFilters();
+    renderDashboard();
+  </script>
+</body>
+</html>
